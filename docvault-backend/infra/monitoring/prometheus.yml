@@ -1,0 +1,49 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'gateway'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['gateway:8080']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: service
+        replacement: gateway
+
+  - job_name: 'documents'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['documents:8081']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: service
+        replacement: documents
+
+  - job_name: 'comments'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['comments:8082']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: service
+        replacement: comments
+
+  - job_name: 'esb'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['esb:8083']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: service
+        replacement: esb
+
+  - job_name: 'ai-consumer'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['ai-consumer:8085']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: service
+        replacement: ai-consumer

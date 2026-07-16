@@ -1,0 +1,128 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: docvault-gateway
+
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:5432/${POSTGRES_DB:docvault}
+    username: ${POSTGRES_USER:docvault}
+    password: ${POSTGRES_PASSWORD:docvault123}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: 6379
+      password: ${REDIS_PASSWORD:}
+      timeout: 3000ms
+
+  cloud:
+    gateway:
+      globalcors:
+        add-to-simple-url-handler-mapping: true
+        corsConfigurations:
+          '[/**]':
+            allowedOriginPatterns: ["*"]
+            allowedMethods: ["GET","POST","PUT","PATCH","DELETE","OPTIONS","HEAD"]
+            allowedHeaders: ["*"]
+            allowCredentials: false
+            maxAge: 3600
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+      routes:
+        # ── /api/users → gateway itself (auth service owns users) ─────────────
+        #- id: users-service
+        # uri: http://localhost:${SERVER_PORT:8080}
+        # predicates:
+        #  - Path=/api/users/**
+        # filters:
+        #  - JwtAuthFilter
+
+        - id: users-service
+          uri: http://localhost:${SERVER_PORT:8080}
+          predicates:
+          - Path=/auth/users/**
+          filters:
+          - JwtAuthFilter
+
+        
+
+        
+
+        # ── documents, versions, presigned, categories, departments ────────────
+        - id: documents-service
+          uri: http://${DOCUMENTS_HOST:localhost}:8081
+          predicates:
+            - Path=/api/documents/**, /api/versions/**, /api/presigned/**, /api/categories/**, /api/departments/**
+          filters:
+            - JwtAuthFilter
+
+        # ── comments ──────────────────────────────────────────────────────────
+        - id: comments-service
+          uri: http://${COMMENTS_HOST:localhost}:8082
+          predicates:
+            - Path=/api/comments/**
+          filters:
+            - JwtAuthFilter
+
+        # ── ESB / audit ────────────────────────────────────────────────────────
+        - id: esb-service
+          uri: http://${ESB_HOST:localhost}:8083
+          predicates:
+            - Path=/api/events/**
+          filters:
+            - JwtAuthFilter
+
+        # ── AI service ─────────────────────────────────────────────────────────
+        - id: ai-service
+          uri: http://${AI_HOST:localhost}:8085
+          predicates:
+            - Path=/api/ai/**
+          filters:
+            - JwtAuthFilter
+
+        # Remove or comment out the notifications route that loops back:
+          # - id: notifications-service
+          #   uri: http://localhost:${SERVER_PORT:8080}
+          #   predicates:
+          #     - Path=/api/notifications/**
+          #   filters:
+          #     - JwtAuthFilter
+
+jwt:
+  secret: ${JWT_SECRET:docvault-super-secret-key-minimum-32-chars-long-2024}
+  expiration-ms: 3600000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,env,loggers,gateway,prometheus
+  endpoint:
+    health:
+      show-details: always
+    gateway:
+      enabled: true
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: DocVault Gateway
+    version: 1.0.0
+
+logging:
+  level:
+    com.docvault: DEBUG
+    org.springframework.cloud.gateway: INFO
+
+
+    

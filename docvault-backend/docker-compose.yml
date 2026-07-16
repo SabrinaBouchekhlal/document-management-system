@@ -1,0 +1,435 @@
+version: "3.9"
+
+networks:
+  docvault-net:
+    driver: bridge
+
+volumes:
+  postgres-primary-data:
+  postgres-replica-data:
+  cassandra-data:
+  redis-data:
+  redpanda-data:
+  localstack-data:
+  libretranslate-data:
+
+x-spring-env: &spring-env
+  POSTGRES_HOST: postgres-primary
+  POSTGRES_DB: docvault
+  POSTGRES_USER: docvault
+  POSTGRES_PASSWORD: docvault123
+  CASSANDRA_HOST: cassandra
+  CASSANDRA_KEYSPACE: docvault
+  CASSANDRA_DC: datacenter1
+  REDIS_HOST: redis
+  KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+  S3_BUCKET: docvault-files
+  S3_ENDPOINT: http://localstack:4566
+  AWS_ACCESS_KEY: test
+  AWS_SECRET_KEY: test
+  AWS_REGION: us-east-1
+  JWT_SECRET: docvault-super-secret-key-minimum-32-chars-long-2024
+
+services:
+
+  # ── PostgreSQL Primary ─────────────────────────────────────────────────────
+  postgres-primary:
+    image: postgres:15-alpine
+    container_name: docvault-postgres-primary
+    networks: [docvault-net]
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: docvault
+      POSTGRES_USER: docvault
+      POSTGRES_PASSWORD: docvault123
+    volumes:
+      - postgres-primary-data:/var/lib/postgresql/data
+      - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+    command: >
+      postgres
+        -c wal_level=replica
+        -c max_wal_senders=3
+        -c wal_keep_size=64MB
+        -c hot_standby=on
+        -c listen_addresses=*
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U docvault -d docvault"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ── PostgreSQL Replica (streaming replication) ─────────────────────────────
+  postgres-replica:
+    image: postgres:15-alpine
+    container_name: docvault-postgres-replica
+    networks: [docvault-net]
+    restart: unless-stopped
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: docvault123
+      PGUSER: docvault
+    volumes:
+      - postgres-replica-data:/var/lib/postgresql/data
+    entrypoint: >
+      sh -c "
+        DATA=/var/lib/postgresql/data
+        if [ ! -f $${DATA}/PG_VERSION ]; then
+          echo 'Waiting for primary...'
+          sleep 10
+          pg_basebackup -h postgres-primary -p 5432 -U docvault -D $${DATA} -Fp -Xs -R -P --checkpoint=fast
+          echo \"primary_conninfo = 'host=postgres-primary port=5432 user=docvault password=docvault123'\" >> $${DATA}/postgresql.auto.conf
+          touch $${DATA}/standby.signal
+        fi
+        exec postgres -D $${DATA} -c hot_standby=on -c listen_addresses='*'
+      "
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U docvault"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  # ── Cassandra ──────────────────────────────────────────────────────────────
+  cassandra:
+    image: cassandra:4.1
+    container_name: docvault-cassandra
+    networks: [docvault-net]
+    restart: unless-stopped
+    environment:
+      CASSANDRA_CLUSTER_NAME: DocVaultCluster
+      CASSANDRA_DC: datacenter1
+      CASSANDRA_ENDPOINT_SNITCH: GossipingPropertyFileSnitch
+      HEAP_NEWSIZE: 128M
+      MAX_HEAP_SIZE: 512M
+    volumes:
+      - cassandra-data:/var/lib/cassandra
+    ports:
+      - "9042:9042"
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh -e 'describe keyspaces' || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+      start_period: 90s
+
+  # ── Cassandra Init ─────────────────────────────────────────────────────────
+  cassandra-init:
+    image: cassandra:4.1
+    container_name: docvault-cassandra-init
+    networks: [docvault-net]
+    restart: "no"
+    depends_on:
+      cassandra:
+        condition: service_healthy
+    volumes:
+      - ./infra/cassandra/init.cql:/init.cql
+    entrypoint: >
+      sh -c "
+        until cqlsh cassandra -e 'describe keyspaces'; do
+          echo 'Waiting for Cassandra...'; sleep 5
+        done
+        cqlsh cassandra -f /init.cql &&
+        echo 'Cassandra init done.'
+      "
+
+  # ── Redis ──────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: docvault-redis
+    networks: [docvault-net]
+    restart: unless-stopped
+    command: redis-server --appendonly yes --loglevel warning
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # ── Redpanda (Kafka-compatible, single node) ───────────────────────────────
+  redpanda:
+    image: redpandadata/redpanda:v23.3.11
+    container_name: docvault-redpanda
+    networks: [docvault-net]
+    restart: unless-stopped
+    command:
+      - redpanda
+      - start
+      - --kafka-addr internal://0.0.0.0:9092,external://0.0.0.0:19092
+      - --advertise-kafka-addr internal://redpanda:9092,external://localhost:19092
+      - --pandaproxy-addr internal://0.0.0.0:8082,external://0.0.0.0:18082
+      - --advertise-pandaproxy-addr internal://redpanda:8082,external://localhost:18082
+      - --schema-registry-addr internal://0.0.0.0:8081,external://0.0.0.0:18081
+      - --rpc-addr redpanda:33145
+      - --advertise-rpc-addr redpanda:33145
+      - --smp 1
+      - --memory 512M
+      - --reserve-memory 0M
+      - --overprovisioned
+      - --node-id 0
+      - --check=false
+    volumes:
+      - redpanda-data:/var/lib/redpanda/data
+    ports:
+      - "19092:19092"   # external Kafka (for local testing with kafka-cli)
+      - "18082:18082"   # Pandaproxy REST
+      - "18081:18081"   # Schema registry
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health | grep -q 'Healthy:.*true' || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # ── Redpanda Console (Kafka UI) ────────────────────────────────────────────
+  redpanda-console:
+    image: redpandadata/console:v2.4.3
+    container_name: docvault-redpanda-console
+    networks: [docvault-net]
+    restart: unless-stopped
+    depends_on:
+      redpanda:
+        condition: service_healthy
+    environment:
+      CONFIG_FILEPATH: /etc/redpanda/redpanda-console-config.yaml
+    volumes:
+      - ./infra/kafka/redpanda-console-config.yaml:/etc/redpanda/redpanda-console-config.yaml
+    ports:
+      - "8090:8080"   # Kafka UI at http://localhost:8090
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/api/cluster || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # ── LocalStack (S3) ────────────────────────────────────────────────────────
+  localstack:
+    image: localstack/localstack:3.0
+    container_name: docvault-localstack
+    networks: [docvault-net]
+    restart: unless-stopped
+    environment:
+      SERVICES: s3
+      DEFAULT_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      PERSISTENCE: 1
+    volumes:
+      - localstack-data:/var/lib/localstack
+      - ./infra/localstack/init-s3.sh:/etc/localstack/init/ready.d/init-s3.sh
+    ports:
+      - "4566:4566"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:4566/_localstack/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ── LibreTranslate (free self-hosted translation API) ─────────────────────
+  libretranslate:
+    image: libretranslate/libretranslate:latest
+    container_name: docvault-libretranslate
+    networks: [docvault-net]
+    restart: unless-stopped
+    environment:
+      LT_LOAD_ONLY: "en,fr"    # only load English and French to save memory
+      LT_DISABLE_WEB_UI: "false"
+    volumes:
+      - libretranslate-data:/home/libretranslate/.local
+    ports:
+      - "5000:5000"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5000/languages || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 120s   # model download takes time on first run
+
+  # ── Gateway ────────────────────────────────────────────────────────────────
+  gateway:
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+    container_name: docvault-gateway
+    networks: [docvault-net]
+    restart: unless-stopped
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      <<: *spring-env
+      DOCUMENTS_HOST: documents
+      COMMENTS_HOST: comments
+      ESB_HOST: esb
+      AI_HOST: ai-consumer
+      SERVER_PORT: 8080
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  # ── Documents Service ──────────────────────────────────────────────────────
+  documents:
+    build:
+      context: .
+      dockerfile: service-documents/Dockerfile
+    container_name: docvault-documents
+    networks: [docvault-net]
+    restart: unless-stopped
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+    environment:
+      <<: *spring-env
+      SERVER_PORT: 8081
+    ports:
+      - "8081:8081"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8081/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  # ── Comments Service ───────────────────────────────────────────────────────
+  comments:
+    build:
+      context: .
+      dockerfile: service-comments/Dockerfile
+    container_name: docvault-comments
+    networks: [docvault-net]
+    restart: unless-stopped
+    depends_on:
+      cassandra:
+        condition: service_healthy
+      cassandra-init:
+        condition: service_completed_successfully
+      redpanda:
+        condition: service_healthy
+    environment:
+      <<: *spring-env
+      SERVER_PORT: 8082
+    ports:
+      - "8082:8082"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8082/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 90s
+
+  # ── ESB Service ────────────────────────────────────────────────────────────
+  esb:
+    build:
+      context: .
+      dockerfile: service-esb/Dockerfile
+    container_name: docvault-esb
+    networks: [docvault-net]
+    restart: unless-stopped
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      <<: *spring-env
+      SERVER_PORT: 8083
+    ports:
+      - "8083:8083"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8083/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  # ── Python AI Consumer ─────────────────────────────────────────────────────
+  ai-consumer:
+    build:
+      context: ./service-python-consumer
+      dockerfile: Dockerfile
+    container_name: docvault-ai-consumer
+    networks: [docvault-net]
+    restart: unless-stopped
+    depends_on:
+      redpanda:
+        condition: service_healthy
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+      DOCUMENTS_SERVICE_URL: http://documents:8081
+      LIBRETRANSLATE_URL: http://libretranslate:5000
+      HF_API_KEY: ""   # optional — add your HuggingFace token here to increase rate limits
+    ports:
+      - "8085:8085"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8085/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+   # ── Prometheus ────────────────────────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: docvault-prometheus
+    networks: [docvault-net]
+    restart: unless-stopped
+    volumes:
+      - ./infra/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:9090/-/healthy || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # ── Grafana ───────────────────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:10.4.0
+    container_name: docvault-grafana
+    networks: [docvault-net]
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: docvault123
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./infra/monitoring/grafana/provisioning:/etc/grafana/provisioning
+    ports:
+      - "3001:3000"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3

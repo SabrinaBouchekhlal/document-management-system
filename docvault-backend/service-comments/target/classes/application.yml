@@ -1,0 +1,48 @@
+server:
+  port: ${SERVER_PORT:8082}
+
+spring:
+  application:
+    name: docvault-comments
+
+  cassandra:
+    contact-points: ${CASSANDRA_HOST:localhost}
+    port: 9042
+    keyspace-name: ${CASSANDRA_KEYSPACE:docvault}
+    local-datacenter: ${CASSANDRA_DC:datacenter1}
+    schema-action: CREATE_IF_NOT_EXISTS
+    request:
+      timeout: 15s
+    connection:
+      connect-timeout: 15s
+      init-query-timeout: 15s
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,env,prometheus
+  endpoint:
+    health:
+      show-details: always
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: DocVault Comments Service
+    version: 1.0.0
+
+logging:
+  level:
+    com.docvault: DEBUG
+    com.datastax: WARN

@@ -1,0 +1,7 @@
+com\docvault\shared\events\CommentEvent.class
+com\docvault\shared\jwt\JwtUtil.class
+com\docvault\shared\events\DocumentEvent$Type.class
+com\docvault\shared\events\CommentEvent$Type.class
+com\docvault\shared\events\CommentEvent$CommentEventBuilder.class
+com\docvault\shared\events\DocumentEvent$DocumentEventBuilder.class
+com\docvault\shared\events\DocumentEvent.class

@@ -1,0 +1,8 @@
+com\docvault\esb\entity\AuditLogEntity.class
+com\docvault\esb\consumer\DocumentEventConsumer.class
+com\docvault\esb\EsbApplication.class
+com\docvault\esb\consumer\CommentEventConsumer.class
+com\docvault\esb\controller\AuditController.class
+com\docvault\esb\config\EsbConfig.class
+com\docvault\esb\entity\AuditLogEntity$AuditLogEntityBuilder.class
+com\docvault\esb\repository\AuditLogRepository.class

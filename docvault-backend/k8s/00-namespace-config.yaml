@@ -1,0 +1,48 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: docvault
+  labels:
+    app: docvault
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: docvault-config
+  namespace: docvault
+data:
+  POSTGRES_HOST:           "postgres-primary"
+  POSTGRES_DB:             "docvault"
+  POSTGRES_USER:           "docvault"
+  CASSANDRA_HOST:          "cassandra"
+  CASSANDRA_KEYSPACE:      "docvault"
+  CASSANDRA_DC:            "datacenter1"
+  REDIS_HOST:              "redis"
+  KAFKA_BOOTSTRAP_SERVERS: "redpanda:9092"
+  S3_BUCKET:               "docvault-files"
+  S3_ENDPOINT:             "http://localstack:4566"
+  AWS_REGION:              "us-east-1"
+  DOCUMENTS_HOST:          "documents"
+  COMMENTS_HOST:           "comments"
+  ESB_HOST:                "esb"
+  AI_HOST:                 "ai-consumer"
+  DOCUMENTS_SERVICE_URL:   "http://documents:8081"
+  LIBRETRANSLATE_URL:      "http://libretranslate:5000"
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: docvault-secrets
+  namespace: docvault
+type: Opaque
+stringData:
+  POSTGRES_PASSWORD: "docvault123"
+  CASSANDRA_PASSWORD: "cassandra"
+  REDIS_PASSWORD: ""
+  JWT_SECRET: "docvault-super-secret-key-minimum-32-chars-long-2024"
+  AWS_ACCESS_KEY: "test"
+  AWS_SECRET_KEY: "test"
+  HF_API_KEY: ""

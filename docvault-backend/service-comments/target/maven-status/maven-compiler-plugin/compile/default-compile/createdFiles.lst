@@ -1,0 +1,12 @@
+com\docvault\comments\entity\CommentEntity.class
+com\docvault\comments\repository\CommentRepository.class
+com\docvault\comments\dto\CommentDtos.class
+com\docvault\comments\dto\CommentDtos$CommentResponse$CommentResponseBuilder.class
+com\docvault\comments\config\CommentsConfig.class
+com\docvault\comments\dto\CommentDtos$CommentResponse.class
+com\docvault\comments\dto\CommentDtos$CreateCommentRequest.class
+com\docvault\comments\controller\CommentController.class
+com\docvault\comments\CommentsApplication.class
+com\docvault\comments\entity\CommentEntity$CommentEntityBuilder.class
+com\docvault\comments\dto\CommentDtos$UpdateCommentRequest.class
+com\docvault\comments\service\CommentService.class

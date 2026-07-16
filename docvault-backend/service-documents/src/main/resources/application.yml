@@ -1,0 +1,69 @@
+server:
+  port: ${SERVER_PORT:8081}
+
+spring:
+  application:
+    name: docvault-documents
+
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:5432/${POSTGRES_DB:docvault}
+    username: ${POSTGRES_USER:docvault}
+    password: ${POSTGRES_PASSWORD:docvault123}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
+    consumer:
+      group-id: documents-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+
+aws:
+  s3:
+    bucket: ${S3_BUCKET:docvault-files}
+    region: ${AWS_REGION:us-east-1}
+    endpoint: ${S3_ENDPOINT:http://localhost:4566}
+    access-key: ${AWS_ACCESS_KEY:test}
+    secret-key: ${AWS_SECRET_KEY:test}
+    presigned-url-expiry-minutes: 60
+
+jwt:
+  secret: ${JWT_SECRET:docvault-super-secret-key-minimum-32-chars-long-2024}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,env,prometheus
+  endpoint:
+    health:
+      show-details: always
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: DocVault Documents Service
+    version: 1.0.0
+
+logging:
+  level:
+    com.docvault: DEBUG

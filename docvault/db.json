@@ -1,0 +1,204 @@
+{
+  "users": [
+    {
+      "id": "1",
+      "name": "Alice Admin",
+      "email": "admin@docvault.com",
+      "password": "admin123",
+      "role": "admin",
+      "status": "active",
+      "departmentId": "1",
+      "avatar": "AA",
+      "createdAt": "2024-01-01T00:00:00Z"
+    },
+    {
+      "id": "2",
+      "name": "Bob Builder",
+      "email": "bob@docvault.com",
+      "password": "user123",
+      "role": "user",
+      "status": "active",
+      "departmentId": "2",
+      "avatar": "BB",
+      "createdAt": "2024-01-05T00:00:00Z"
+    },
+    {
+      "id": "3",
+      "name": "Carol Clark",
+      "email": "carol@docvault.com",
+      "password": "user123",
+      "role": "user",
+      "status": "active",
+      "departmentId": "1",
+      "avatar": "CC",
+      "createdAt": "2024-01-10T00:00:00Z"
+    },
+    {
+      "id": "4",
+      "name": "Dan Davis",
+      "email": "dan@docvault.com",
+      "password": "user123",
+      "role": "user",
+      "status": "suspended",
+      "departmentId": "3",
+      "avatar": "DD",
+      "createdAt": "2024-01-15T00:00:00Z"
+    },
+    {
+      "id": "5",
+      "name": "Eve Evans",
+      "email": "eve@docvault.com",
+      "password": "user123",
+      "role": "user",
+      "status": "active",
+      "departmentId": "2",
+      "avatar": "EE",
+      "createdAt": "2024-02-01T00:00:00Z"
+    }
+  ],
+  "departments": [
+    { "id": "1", "name": "Engineering", "description": "Software development team", "memberCount": 2 },
+    { "id": "2", "name": "Marketing", "description": "Brand and communications", "memberCount": 2 },
+    { "id": "3", "name": "Finance", "description": "Accounting and financial planning", "memberCount": 1 },
+    { "id": "4", "name": "HR", "description": "Human resources and recruitment", "memberCount": 0 }
+  ],
+  "categories": [
+    { "id": "1", "name": "Policies", "color": "#6366f1", "icon": "Shield", "docCount": 3 },
+    { "id": "2", "name": "Technical", "color": "#14b8a6", "icon": "Code", "docCount": 4 },
+    { "id": "3", "name": "Finance", "color": "#f59e0b", "icon": "DollarSign", "docCount": 2 },
+    { "id": "4", "name": "HR", "color": "#ec4899", "icon": "Users", "docCount": 2 }
+  ],
+  "documents": [
+    {
+      "id": "1",
+      "title": "Employee Handbook 2024",
+      "description": "Comprehensive guide to company policies, culture, and procedures for all employees.",
+      "categoryId": "1",
+      "departmentId": "1",
+      "uploadedBy": "1",
+      "status": "published",
+      "fileType": "pdf",
+      "fileSize": 2457600,
+      "tags": ["policy", "onboarding", "hr"],
+      "currentVersion": 3,
+      "createdAt": "2024-01-10T09:00:00Z",
+      "updatedAt": "2024-03-15T14:30:00Z",
+      "views": 142,
+      "downloads": 38
+    },
+    {
+      "id": "2",
+      "title": "API Integration Guide",
+      "description": "Step-by-step guide for integrating third-party APIs into the platform.",
+      "categoryId": "2",
+      "departmentId": "1",
+      "uploadedBy": "2",
+      "status": "published",
+      "fileType": "pdf",
+      "fileSize": 1024000,
+      "tags": ["api", "technical", "integration"],
+      "currentVersion": 2,
+      "createdAt": "2024-01-20T10:00:00Z",
+      "updatedAt": "2024-02-28T11:00:00Z",
+      "views": 89,
+      "downloads": 22
+    },
+    {
+      "id": "3",
+      "title": "Q1 Financial Report",
+      "description": "Quarterly financial performance analysis and projections.",
+      "categoryId": "3",
+      "departmentId": "3",
+      "uploadedBy": "1",
+      "status": "published",
+      "fileType": "xlsx",
+      "fileSize": 512000,
+      "tags": ["finance", "quarterly", "report"],
+      "currentVersion": 1,
+      "createdAt": "2024-02-01T08:00:00Z",
+      "updatedAt": "2024-02-01T08:00:00Z",
+      "views": 34,
+      "downloads": 11
+    },
+    {
+      "id": "4",
+      "title": "Marketing Strategy 2024",
+      "description": "Annual marketing strategy including campaigns, budgets and KPIs.",
+      "categoryId": "1",
+      "departmentId": "2",
+      "uploadedBy": "5",
+      "status": "draft",
+      "fileType": "pptx",
+      "fileSize": 3145728,
+      "tags": ["marketing", "strategy", "2024"],
+      "currentVersion": 1,
+      "createdAt": "2024-02-10T15:00:00Z",
+      "updatedAt": "2024-02-10T15:00:00Z",
+      "views": 15,
+      "downloads": 3
+    },
+    {
+      "id": "5",
+      "title": "System Architecture Overview",
+      "description": "High-level diagram and documentation of the system architecture.",
+      "categoryId": "2",
+      "departmentId": "1",
+      "uploadedBy": "2",
+      "status": "published",
+      "fileType": "pdf",
+      "fileSize": 768000,
+      "tags": ["technical", "architecture", "system"],
+      "currentVersion": 4,
+      "createdAt": "2023-11-01T09:00:00Z",
+      "updatedAt": "2024-03-01T10:00:00Z",
+      "views": 203,
+      "downloads": 67
+    },
+    {
+      "id": "6",
+      "title": "Recruitment Policy",
+      "description": "Guidelines and procedures for recruiting, interviewing, and hiring candidates.",
+      "categoryId": "4",
+      "departmentId": "4",
+      "uploadedBy": "1",
+      "status": "published",
+      "fileType": "docx",
+      "fileSize": 204800,
+      "tags": ["hr", "recruitment", "policy"],
+      "currentVersion": 2,
+      "createdAt": "2024-01-05T11:00:00Z",
+      "updatedAt": "2024-03-10T09:00:00Z",
+      "views": 57,
+      "downloads": 14
+    }
+  ],
+  "versions": [
+    { "id": "1", "documentId": "1", "version": 1, "uploadedBy": "1", "changelog": "Initial upload", "fileSize": 2000000, "createdAt": "2024-01-10T09:00:00Z" },
+    { "id": "2", "documentId": "1", "version": 2, "uploadedBy": "3", "changelog": "Updated benefits section and remote work policy", "fileSize": 2200000, "createdAt": "2024-02-01T10:00:00Z" },
+    { "id": "3", "documentId": "1", "version": 3, "uploadedBy": "1", "changelog": "Added 2024 holiday schedule and updated org chart", "fileSize": 2457600, "createdAt": "2024-03-15T14:30:00Z" },
+    { "id": "4", "documentId": "2", "version": 1, "uploadedBy": "2", "changelog": "Initial upload", "fileSize": 900000, "createdAt": "2024-01-20T10:00:00Z" },
+    { "id": "5", "documentId": "2", "version": 2, "uploadedBy": "2", "changelog": "Added OAuth 2.0 section and updated rate limits", "fileSize": 1024000, "createdAt": "2024-02-28T11:00:00Z" },
+    { "id": "6", "documentId": "5", "version": 1, "uploadedBy": "2", "changelog": "Initial architecture draft", "fileSize": 500000, "createdAt": "2023-11-01T09:00:00Z" },
+    { "id": "7", "documentId": "5", "version": 2, "uploadedBy": "2", "changelog": "Added microservices diagram", "fileSize": 600000, "createdAt": "2023-12-15T10:00:00Z" },
+    { "id": "8", "documentId": "5", "version": 3, "uploadedBy": "1", "changelog": "Updated after infrastructure migration", "fileSize": 700000, "createdAt": "2024-01-20T09:00:00Z" },
+    { "id": "9", "documentId": "5", "version": 4, "uploadedBy": "2", "changelog": "Added cloud services and security layer", "fileSize": 768000, "createdAt": "2024-03-01T10:00:00Z" }
+  ],
+  "comments": [
+    { "id": "1", "documentId": "1", "userId": "2", "content": "The remote work policy in section 4 needs clarification regarding international employees.", "createdAt": "2024-03-16T09:00:00Z", "resolved": false },
+    { "id": "2", "documentId": "1", "userId": "3", "content": "Updated version looks great! The holiday schedule is much clearer now.", "createdAt": "2024-03-16T11:30:00Z", "resolved": false },
+    { "id": "3", "documentId": "1", "userId": "5", "content": "Can we add a section about the employee assistance program?", "createdAt": "2024-03-17T14:00:00Z", "resolved": false },
+    { "id": "4", "documentId": "2", "userId": "3", "content": "The OAuth section is exactly what I needed. Very well documented!", "createdAt": "2024-03-01T10:00:00Z", "resolved": false },
+    { "id": "5", "documentId": "2", "userId": "5", "content": "Missing documentation on webhook retry logic. Can that be added?", "createdAt": "2024-03-02T15:00:00Z", "resolved": false },
+    { "id": "6", "documentId": "5", "userId": "3", "content": "The cloud services diagram is very helpful. Could we also show the on-prem components?", "createdAt": "2024-03-02T09:00:00Z", "resolved": false }
+  ],
+  "notifications": [
+    { "id": "1", "userId": "2", "type": "comment", "message": "Carol commented on Employee Handbook 2024", "documentId": "1", "read": false, "createdAt": "2024-03-16T11:30:00Z" },
+    { "id": "2", "userId": "2", "type": "version", "message": "New version of System Architecture Overview uploaded", "documentId": "5", "read": false, "createdAt": "2024-03-01T10:00:00Z" },
+    { "id": "3", "userId": "3", "type": "comment", "message": "Eve commented on API Integration Guide", "documentId": "2", "read": true, "createdAt": "2024-03-02T15:00:00Z" }
+  ],
+  "activityLog": [
+    { "id": "1", "userId": "1", "action": "upload", "resourceType": "document", "resourceId": "1", "details": "Uploaded Employee Handbook 2024", "createdAt": "2024-01-10T09:00:00Z" },
+    { "id": "2", "userId": "2", "action": "view", "resourceType": "document", "resourceId": "2", "details": "Viewed API Integration Guide", "createdAt": "2024-03-17T10:00:00Z" },
+    { "id": "3", "userId": "1", "action": "create", "resourceType": "user", "resourceId": "5", "details": "Created user Eve Evans", "createdAt": "2024-02-01T08:00:00Z" }
+  ]
+}

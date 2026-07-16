@@ -1,0 +1,8 @@
+C:\Users\THE ITWORLDZ\Desktop\sabrina\Entreprise Computing\project_assignment\docvault-backend\gateway\src\main\java\com\docvault\gateway\dto\AuthDtos.java
+C:\Users\THE ITWORLDZ\Desktop\sabrina\Entreprise Computing\project_assignment\docvault-backend\gateway\src\main\java\com\docvault\gateway\config\GatewayConfig.java
+C:\Users\THE ITWORLDZ\Desktop\sabrina\Entreprise Computing\project_assignment\docvault-backend\gateway\src\main\java\com\docvault\gateway\controller\AuthController.java
+C:\Users\THE ITWORLDZ\Desktop\sabrina\Entreprise Computing\project_assignment\docvault-backend\gateway\src\main\java\com\docvault\gateway\GatewayApplication.java
+C:\Users\THE ITWORLDZ\Desktop\sabrina\Entreprise Computing\project_assignment\docvault-backend\gateway\src\main\java\com\docvault\gateway\entity\UserEntity.java
+C:\Users\THE ITWORLDZ\Desktop\sabrina\Entreprise Computing\project_assignment\docvault-backend\gateway\src\main\java\com\docvault\gateway\filter\JwtAuthFilter.java
+C:\Users\THE ITWORLDZ\Desktop\sabrina\Entreprise Computing\project_assignment\docvault-backend\gateway\src\main\java\com\docvault\gateway\repository\UserRepository.java
+C:\Users\THE ITWORLDZ\Desktop\sabrina\Entreprise Computing\project_assignment\docvault-backend\gateway\src\main\java\com\docvault\gateway\service\AuthService.java
